@@ -4,6 +4,7 @@
 ##                                    作者沈凯
 ##                                    版本V1.0
 ##############################################################################
+##创建用户的函数
 creat_user(){
 user_list=()
 user_list=$(sed -n 'p' /tmp/user_list.txt)
@@ -15,6 +16,7 @@ echo $password |passwd --stdin $user >/dev/null 2>&1
 printf  "user:%s password:%s\n" $user $password >/var/log/user_list_`date +%F-%H-%M-%S`.txt 2>&1
 done
 }
+####检测用户是否创建成功的函数
 if_creat_success(){
 created_users=()
 created_users=$(awk '{print $1}' /tmp/user_list.txt)
@@ -33,6 +35,7 @@ done
 
 
 }
+#####检测创建用户是否存在的函数
 if_exit_user(){
 exit_user=()
 exit_user=`awk -F ":" '{print $1}' /etc/passwd`
@@ -55,7 +58,7 @@ return 1
 fi
 
 }
-
+#####主脚本代码
 if [ "$#" = "0" ];then
 
 echo -e "#####################################################################\n
