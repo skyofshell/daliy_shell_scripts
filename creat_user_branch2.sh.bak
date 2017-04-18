@@ -1,0 +1,79 @@
+#!/bin/bash
+##############################################################################
+##                                    批量创建用户
+##                                    作者沈凯
+##                                    版本V1.0
+##############################################################################
+creat_user(){
+user_list=()
+user_list=$(sed -n 'p' /tmp/user_list.txt)
+for user in ${user_list[*]}
+do
+useradd $user >/dev/null 2>&1
+password=$(echo $RANDOM|md5sum|cut -c 1-8)
+echo $password |passwd --stdin $user >/dev/null 2>&1
+printf  "user:%s password:%s\n" $user $password >/var/log/user_list_`date +%F-%H-%M-%S`.txt 2>&1
+done
+}
+if_creat_success(){
+created_users=()
+created_users=$(awk '{print $1}' /tmp/user_list.txt)
+exit_users=()
+exit_users=`awk -F ":" '{print $1}' /etc/passwd`
+for user3 in ${created_users[*]}
+do
+  for user4 in ${exit_users[@]}
+  do
+  if [ $user3 = $user4 ];then
+  echo "$user3 created successly"
+  fi
+  
+  done
+done
+
+
+}
+if_exit_user(){
+exit_user=()
+exit_user=`awk -F ":" '{print $1}' /etc/passwd`
+rm -f /tmp/user_list.txt >/dev/null 2>&1
+for user1 in $@
+do
+  echo $user1 >> /tmp/user_list.txt 2>&1 
+  for n in ${exit_user[*]}
+    do
+      if [ $user1 = $n ];then
+      echo "$user1 已经存在， 无法再次创建"
+      sed -i "/$user1/d" /tmp/user_list.txt >/dev/null 2>&1 
+      fi
+     done
+done
+if [ -s /tmp/user_list.txt ];then
+return 0
+else
+return 1
+fi
+
+}
+
+if [ "$#" = "0" ];then
+
+echo -e "#####################################################################\n
+本脚本的使用方式如下：bash 脚本名 用户1 用户2 用户3 用户4......如:\n"
+echo -e "bash $0 user1 user2 user3 user4 ....... "|egrep --color=auto '[^ ]+'
+echo "                                                                      "
+echo -e "#####################################################################\n\n
+                             作者：沈凯\n
+                             版本：v1.0\n\n
+######################################################################"
+else
+if_exit_user $@  
+  if [ $? == 1 ];then
+  echo "有效用户数为零，请重新执行脚本"
+  exit 1
+  else
+  creat_user
+  if_creat_success
+  exit 0
+  fi
+fi
